@@ -7,13 +7,20 @@
 
 #A memory object to store a candidate
 class Candidate:
+    candidates = list()
+    allCandidates = list()
+    numCands = 0
+
     # Initializes candidate with a name, all other values set to defaults
     def __init__(self, name):
-        self.__name = name.lower()
+        self.__name = name
         self.__votes = 0.0
         self.__isElected = False
         self.__isEliminated = False
         self.__displayVotes = 0.0
+        Candidate.candidates.append(self)
+        Candidate.allCandidates.append(self)
+        Candidate.numCands += 1
 
     # Get the candidate's name
     def getName(self):
@@ -68,7 +75,8 @@ class Candidate:
     #Eliminates the candidate
     def eliminate(self):
         self.__isEliminated = True
-        candidates.remove(self)
+        Candidate.candidates.remove(self)
+        Candidate.numCands -= 1
     
     #Reflect whether the candidate is eliminated
     def isEliminated(self):
@@ -84,60 +92,109 @@ class Candidate:
             returnstr += "\t ELIMINATED"
         return returnstr
 
-#List all non-eliminated candidates
-def printAllCandidates():
-    candStr = ""
-    for i in range(numCands):
-        candStr += str(i + 1) + ". " + candidates[i].getName() + "     "
-    print(candStr)
+    #Seach candidates for one with a specific name
+    def searchCandidates(name):
+        for candidate in Candidate.candidates:
+            if name == candidate.getName().lower(): 
+                return candidate
+        return False
+    
+    #Sorts all candidates by total votes, from most to least
+    def sort():
+        Candidate.candidates.sort(key=lambda x: x.getVotes(), reverse=True)
+        Candidate.allCandidates.sort(key=lambda x: x.getVotes(), reverse=True)
+    
+    #List all candidates, including vote tallies
+    def printAllVotes():
+        candStr = ""
+        for i in range(len(Candidate.allCandidates)):
+            candStr += str(i + 1) + ". " + str(Candidate.allCandidates[i]) + "\n"
+        print(candStr)
 
-#List all non-eliminated candidates, including vote tallies
-def printCandidateVotes():
-    candStr = ""
-    for i in range(len(candidates)):
-        candStr += str(i + 1) + ". " + str(candidates[i]) + "\n"
-    print(candStr)
+    #List all non-eliminated candidates, including vote tallies
+    def printVotes():
+        candStr = ""
+        for i in range(Candidate.numCands):
+            candStr += str(i + 1) + ". " + str(Candidate.candidates[i]) + "\n"
+        print(candStr)
 
-#List all  candidates, including vote tallies
-def printAllCandidateVotes():
-    candStr = ""
-    for i in range(numCands):
-        candStr += str(i + 1) + ". " + str(allCandidates[i]) + "\n"
-    print(candStr)
+        #Gets the final printout of votes
+    
+    #List all non-eliminated candidates
+    def printAllCandidates():
+        candStr = ""
+        for i in range(Candidate.numCands):
+            candStr += str(i + 1) + ". " + Candidate.candidates[i].getName() + "     "
+        print(candStr)
+    
+    def finalPrint():
+        printout = "Candidates "
+        for candidate in Candidate.candidates:
+            if candidate == Candidate.candidates[Candidate.numCands - 1]:
+                printout += "and " + candidate.getName()
+            else:
+                printout += candidate.getName() + ", "
+        printout += " have been elected. Thank you for using this Single Transferable Vote simulator."
+        print(printout)
 
-#Seach candidates for one with a specific name
-def searchCandidates(name):
-    for candidate in candidates:
-        if name == candidate.getName(): 
-            return candidate
-    return False
+class Ballot:
+    totalBallots = 0
+    ballots = list()
 
-#Checks to make sure that all rankings in a ballot correspond to a candidate
-def checkValidBallot(ballot):
-    ranking = ballot.split(', ')
-    for candidate in ranking:
-        if searchCandidates(candidate) == False: 
-            return False
-    return True
+    def __init__(self, votes):
+        self.__votes = votes
+        self.__rank = 0
+        self.__voteRemaining = 1.0
+        Ballot.totalBallots += 1
+        Ballot.ballots.append(self)
+    
+    def getTally(self):
+        return self.__votes
+    
+    def checkValid():
+        for candidate in Ballot.ballots[Ballot.totalBallots - 1].getTally():
+            if Candidate.searchCandidates(candidate) == False: 
+                return False
+            return True
+    
+    #Collects votes until told to stop
+    def getVotes():
+        print("\n\n~~~~~ENTER VOTES~~~~~")
+        print("Each candidate is listed here by name. Please list as many candidates as you wish separated by commas, in order of most desired to least. For example, a ballot might look like this for an election with five candidates:\nJohn Doe, James Roe, Theodore Roosevelt, Steve Jobs, Albert Einstein")
+        print("To stop entering ballots, enter 'QUIT'")
+        while True:
+            Candidate.printAllCandidates()
+            ballot = str(input()).lower()
+            Ballot(ballot.split(', '))
+            while not Ballot.checkValid() and not ballot == "\'quit\'":
+                Ballot.ballots.pop(Ballot.totalBallots - 1)
+                Ballot.totalBallots -= 1
+                print("Your ballot has an error, please re-enter your votes:")
+                ballot = str(input()).lower()
+                Ballot(ballot.split(', '))
+            if ballot == "\'quit\'":
+                Ballot.ballots.pop(Ballot.totalBallots - 1)
+                Ballot.totalBallots -= 1
+                break
+
 
 #Tallys all votes and runs the single transferable vote process
-def tallyVotes(totalVotes):
+def tallyVotes():
     print("\n\n~~~~~VOTE TALLIES~~~~~")
-    electThreshold = float(totalVotes * electPercent)
-    print("Ballots will now be tabulated. In order to be elected, a candidate must recieve at least {:2f} votes. {:n} ballots have been cast.".format(electThreshold, totalVotes))
-    with open(filename, 'r') as ballots:
-        votes = ballots.readlines()
+    electThreshold = float(Ballot.totalBallots * electPercent)
+    print("Ballots will now be tabulated. In order to be elected, a candidate must recieve at least {:2f} votes. {:n} ballots have been cast.".format(electThreshold, Ballot.totalBallots))
+    
     candidatesElected = 0
-    candidatesRemaining = len(candidates)
+    candidatesRemaining = Candidate.numCands
     round = 1
     while candidatesRemaining > 0:
-        for candidate in candidates:
+        for candidate in Candidate.candidates:
             if not candidate.isElected():
                 candidate.resetVotes()
-        for ballot in votes:
+        for ballot in Ballot.ballots:
             fraction = 1.0
-            for rank in ballot.split(', '):
-                candidate = searchCandidates(rank)
+            for rank in ballot.getTally():
+                candidate = Candidate.searchCandidates(rank)
                 if candidate != False and not candidate.isElected() and not candidate.isEliminated():
                     if fraction != 1.0:
                         candidate.addVotes(fraction)
@@ -147,53 +204,24 @@ def tallyVotes(totalVotes):
                 elif candidate != False and candidate.isElected() and fraction == 1.0:
                     fraction = candidate.getExtraVotePercent(electThreshold)
                     
-        candidates.sort(key=lambda x: x.getVotes(), reverse=True)
-        allCandidates.sort(key=lambda x: x.getVotes(), reverse=True)
+        Candidate.sort()
         print("ROUND {:n} VOTES:".format(round))
         print("{:n} candidates have been elected. There are {:n} candidates remaining.".format(candidatesElected, candidatesRemaining))
-        printCandidateVotes()
+        Candidate.printVotes()
         round += 1
-        for candidate in allCandidates:
+        for candidate in Candidate.allCandidates:
             if candidatesElected < seatNum and not candidate.isElected() and candidate.checkElected(electThreshold):
                 print("{:s} has been elected with {:2f} votes. Their {:2f} surplus votes will be redistributed to other candidates in later rounds.".format(candidate.getName(), candidate.getVotes(), candidate.getVoteSurplus(electThreshold)))
                 candidate.setDisplayVotes(electThreshold)
                 candidatesElected += 1
                 candidatesRemaining -= 1
                 break
-            if not candidate.isElected() and not candidate.isEliminated() and candidate == candidates[len(candidates)-1]:
+            if not candidate.isElected() and not candidate.isEliminated() and candidate == Candidate.candidates[Candidate.numCands - 1]:
                 candidate.eliminate()
                 candidatesRemaining -=1
                 print("{:s} has been eliminated. Their {:2f} votes will be redistributed to other candidates in later rounds.".format(candidate.getName(), candidate.getVotes()))
         input("Press any key to advance to the next round of vote tabulation.\n") 
-
-#Collects votes until told to stop
-def getVotes():
-    totalVotes = 0
-    print("\n\n~~~~~ENTER VOTES~~~~~")
-    print("Each candidate is listed here by name. Please list as many candidates as you wish separated by commas, in order of most desired to least. For example, a ballot might look like this for an election with five candidates:\nJohn Doe, James Roe, Theodore Roosevelt, Steve Jobs, Albert Einstein")
-    with open(filename, 'w', newline='') as ballots:
-        while True:
-            printAllCandidates()
-            ballot = str(input()).lower()
-            while not checkValidBallot(ballot) and not ballot == "quit":
-                print("Your ballot has an error, please re-enter your votes:")
-                ballot = str(input()).lower()
-            if ballot == "quit":
-                break
-            ballots.write(ballot + "\n")
-            totalVotes += 1
-    return totalVotes
-
-#Gets the final printout of votes
-def getFinalPrintout():
-    printout = "Candidates "
-    for candidate in candidates:
-        if candidate == candidates[len(candidates) - 1]:
-            printout += "and " + candidate.getName()
-        else:
-            printout += candidate.getName() + ", "
-    printout += " have been elected. Thank you for using this Single Transferable Vote simulator."
-    return printout
+    return 0
 
 if __name__ == "__main__":
     print("Welcome to @Benjome's Single Transferable Vote calculator!")
@@ -202,22 +230,15 @@ if __name__ == "__main__":
     filename = "elections/" +  name.lower() + ".csv"
     numCands = int(input("Enter Number of Candidates: \n"))
     seatNum = int(input("Enter Number of Seats: \n"))
-    candidates = list()
     
     electPercent = 1 / (float)(seatNum + 1)
     
     for i in range(numCands):
-        candidates.append(Candidate(input("Enter name of candidate " + str(i + 1) + "\n")))
-    allCandidates = candidates.copy()
+        Candidate(input("Enter name of candidate " + str(i + 1) + "\n"))
 
-    totalVotes = getVotes()
-
-    tallyVotes(totalVotes)
-    allCandidates.sort(key=lambda x: x.getVotes(), reverse=True)
+    Ballot.getVotes()
+    tallyVotes()
+    Candidate.sort()
     print("The final tally of the election is:")
-    printAllCandidateVotes()
-    print(getFinalPrintout())
-    
-    
-
-         
+    Candidate.printAllVotes()
+    Candidate.finalPrint()
