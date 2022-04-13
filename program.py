@@ -126,11 +126,12 @@ def tallyVotes(totalVotes):
                     fraction = candidate.getExtraVotePercent(electThreshold)
                     
         candidates.sort(key=lambda x: x.getVotes(), reverse=True)
+        allCandidates.sort(key=lambda x: x.getVotes(), reverse=True)
         print("ROUND {:n} VOTES:".format(round))
         print("{:n} candidates have been elected. There are {:n} candidates remaining.".format(candidatesElected, candidatesRemaining))
         printCandidateVotes()
         round += 1
-        for candidate in candidates:
+        for candidate in allCandidates:
             if candidatesElected < seatNum and not candidate.isElected() and candidate.checkElected(electThreshold):
                 print("{:s} has been elected with {:2f} votes. Their {:2f} surplus votes will be redistributed to other candidates in later rounds.".format(candidate.getName(), candidate.getVotes(), candidate.getVoteSurplus(electThreshold)))
                 candidate.setDisplayVotes(electThreshold)
