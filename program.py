@@ -2,7 +2,7 @@
 # Single Transferable Vote Calculator
 #             Version 1.1
 #         Ben Boardman (@Benjome)
-#            12 April 2022
+#            13 April 2022
 #-------------------------------------
 
 #A memory object to store a candidate
@@ -117,8 +117,6 @@ class Candidate:
         for i in range(Candidate.numCands):
             candStr += str(i + 1) + ". " + str(Candidate.candidates[i]) + "\n"
         print(candStr)
-
-        #Gets the final printout of votes
     
     #List all non-eliminated candidates
     def printAllCandidates():
@@ -127,6 +125,7 @@ class Candidate:
             candStr += str(i + 1) + ". " + Candidate.candidates[i].getName() + "     "
         print(candStr)
     
+    #Gets the final printout of votes
     def finalPrint():
         printout = "Candidates "
         for candidate in Candidate.candidates:
@@ -144,16 +143,41 @@ class Ballot:
 
     #Initializes a ballot given a list of candidate names
     def __init__(self, votes):
+        self.__candidate = None
         self.__votes = votes
         self.__rank = 0
         self.__voteRemaining = 1.0
         Ballot.totalBallots += 1
         Ballot.ballots.append(self)
     
+    #Sets the current candidate to which the ballot is located
+    def setCandidate(self, candidate):
+        self.__candidate = candidate
+    
+    #Returns the first non-eliminated, non-elected candidate 
+    def get(self):
+        return self.__votes[self.__rank]
+
+    #Increments the ballot to look at the next candidate in rank
+    def increment(self):
+        self.__rank += 1
+
+    #Returns the current candidate to which the ballot is located
+    def getCandidate(self):
+        return self.__candidate
+
     #Returns the list of votes in order
     def getTally(self):
         return self.__votes
     
+    #Return the voting power the ballot has remaining
+    def getRemaining(self):
+        return self.__voteRemaining
+    
+    #Set the voting power the ballot has remaining
+    def setRemaining(self, f):
+        self.__voteRemaining = f
+
     #Checks whether a ballot lists valid candidates
     def checkValid():
         for candidate in Ballot.ballots[Ballot.totalBallots - 1].getTally():
@@ -189,7 +213,7 @@ class Ballot:
             else:
                 Ballot.addBallot(ballot)
 
-#Tallys all votes and runs the single transferable vote process
+#Tallies all votes and runs the single transferable vote process
 def tallyVotes():
     print("\n\n~~~~~VOTE TALLIES~~~~~")
     electThreshold = float(Ballot.totalBallots * electPercent)
@@ -199,22 +223,21 @@ def tallyVotes():
     candidatesRemaining = Candidate.numCands
     round = 1
     while candidatesRemaining > 0:
-        for candidate in Candidate.candidates:
-            if not candidate.isElected():
-                candidate.resetVotes()
         for ballot in Ballot.ballots:
-            fraction = 1.0
-            for rank in ballot.getTally():
-                candidate = Candidate.searchCandidates(rank)
-                if candidate != False and not candidate.isElected() and not candidate.isEliminated():
-                    if fraction != 1.0:
-                        candidate.addVotes(fraction)
-                    else:
-                        candidate.addVote()
+            while True:
+                candidate = Candidate.searchCandidates(ballot.get())
+                if candidate.isEliminated():
+                    ballot.increment()
+                elif candidate.isElected():
+                    ballot.setRemaining(candidate.getExtraVotePercent(electThreshold))
+                    ballot.increment()
+                else:
                     break
-                elif candidate != False and candidate.isElected() and fraction == 1.0:
-                    fraction = candidate.getExtraVotePercent(electThreshold)
-                    
+            if not ballot.getCandidate() == candidate:
+                ballot.setCandidate(candidate)
+                candidate.addVotes(ballot.getRemaining())  
+             
+               
         Candidate.sort()
         print("\n~~~ROUND {:n} VOTES~~~".format(round))
         print("{:n} candidates have been elected. There are {:n} candidates remaining.".format(candidatesElected, candidatesRemaining))
