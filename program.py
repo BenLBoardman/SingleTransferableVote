@@ -137,10 +137,12 @@ class Candidate:
         printout += " have been elected. Thank you for using this Single Transferable Vote simulator."
         print(printout)
 
+#Represents a ballot in memory
 class Ballot:
     totalBallots = 0
     ballots = list()
 
+    #Initializes a ballot given a list of candidate names
     def __init__(self, votes):
         self.__votes = votes
         self.__rank = 0
@@ -148,15 +150,18 @@ class Ballot:
         Ballot.totalBallots += 1
         Ballot.ballots.append(self)
     
+    #Returns the list of votes in order
     def getTally(self):
         return self.__votes
     
+    #Checks whether a ballot lists valid candidates
     def checkValid():
         for candidate in Ballot.ballots[Ballot.totalBallots - 1].getTally():
             if Candidate.searchCandidates(candidate) == False: 
                 return False
             return True
     
+    #Add a ballot, given a string representation of the ballot's votes
     def addBallot(ballot):
         Ballot(ballot.split(', '))
         while not Ballot.checkValid():
