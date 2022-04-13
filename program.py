@@ -157,26 +157,32 @@ class Ballot:
                 return False
             return True
     
+    def addBallot(ballot):
+        Ballot(ballot.split(', '))
+        while not Ballot.checkValid():
+            Ballot.ballots.pop(Ballot.totalBallots - 1)
+            Ballot.totalBallots -= 1
+            print("Your ballot has an error, please re-enter your votes:")
+            ballot = str(input()).lower()
+            Ballot(ballot.split(', '))
+
     #Collects votes until told to stop
     def getVotes():
         print("\n\n~~~~~ENTER VOTES~~~~~")
         print("Each candidate is listed here by name. Please list as many candidates as you wish separated by commas, in order of most desired to least. For example, a ballot might look like this for an election with five candidates:\nJohn Doe, James Roe, Theodore Roosevelt, Steve Jobs, Albert Einstein")
-        print("To stop entering ballots, enter 'QUIT'")
+        print("To stop entering ballots, enter 'QUIT'. To enter multiple ballot mode, enter 'BLOCK'.")
         while True:
             Candidate.printAllCandidates()
             ballot = str(input()).lower()
-            Ballot(ballot.split(', '))
-            while not Ballot.checkValid() and not ballot == "\'quit\'":
-                Ballot.ballots.pop(Ballot.totalBallots - 1)
-                Ballot.totalBallots -= 1
-                print("Your ballot has an error, please re-enter your votes:")
-                ballot = str(input()).lower()
-                Ballot(ballot.split(', '))
-            if ballot == "\'quit\'":
-                Ballot.ballots.pop(Ballot.totalBallots - 1)
-                Ballot.totalBallots -= 1
+            if ballot == "'block'":
+                print("You have entered multiple ballot mode. The next input window will allow you to enter as many ballots as you like. Separate ballots using the TAB key.")
+                ballots = str(input()).lower().split("\t")
+                for ballot in ballots:
+                    Ballot.addBallot(ballot)
+            elif ballot == "'quit'":
                 break
-
+            else:
+                Ballot.addBallot(ballot)
 
 #Tallys all votes and runs the single transferable vote process
 def tallyVotes():
@@ -205,7 +211,7 @@ def tallyVotes():
                     fraction = candidate.getExtraVotePercent(electThreshold)
                     
         Candidate.sort()
-        print("ROUND {:n} VOTES:".format(round))
+        print("\n~~~ROUND {:n} VOTES~~~".format(round))
         print("{:n} candidates have been elected. There are {:n} candidates remaining.".format(candidatesElected, candidatesRemaining))
         Candidate.printVotes()
         round += 1
