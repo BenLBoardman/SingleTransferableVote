@@ -1,6 +1,6 @@
 #-------------------------------------
 # Single Transferable Vote Calculator
-#             Version 1.1
+#             Version 1.2.1
 #         Ben Boardman (@Benjome)
 #            13 April 2022
 #-------------------------------------
