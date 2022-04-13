@@ -1,6 +1,9 @@
 # SingleTransferableVote
  A simple program to enter and calculate single transferable vote tallies
 
+# NEW VERSION 1.2
+ - Fixed a bug where candidates may not be eliminated if there are 0 seats remaining
+
 
 # NEW VERSION 1.1
  - Block voting mode: Votes can now be entered in groups of multiple votes

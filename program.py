@@ -105,25 +105,25 @@ class Candidate:
         Candidate.allCandidates.sort(key=lambda x: x.getVotes(), reverse=True)
     
     #List all candidates, including vote tallies
-    def printAllVotes():
+    def getAllVotes():
         candStr = ""
         for i in range(len(Candidate.allCandidates)):
             candStr += str(i + 1) + ". " + str(Candidate.allCandidates[i]) + "\n"
-        print(candStr)
+        return candStr
 
     #List all non-eliminated candidates, including vote tallies
-    def printVotes():
+    def getCandVotes():
         candStr = ""
         for i in range(Candidate.numCands):
             candStr += str(i + 1) + ". " + str(Candidate.candidates[i]) + "\n"
-        print(candStr)
+        return candStr
     
     #List all non-eliminated candidates
-    def printAllCandidates():
+    def getAllCandidates():
         candStr = ""
         for i in range(Candidate.numCands):
             candStr += str(i + 1) + ". " + Candidate.candidates[i].getName() + "     "
-        print(candStr)
+        return candStr
     
     #Gets the final printout of votes
     def finalPrint():
@@ -134,7 +134,7 @@ class Candidate:
             else:
                 printout += candidate.getName() + ", "
         printout += " have been elected. Thank you for using this Single Transferable Vote simulator."
-        print(printout)
+        return printout
 
 #Represents a ballot in memory
 class Ballot:
@@ -194,14 +194,16 @@ class Ballot:
             print("Your ballot has an error, please re-enter your votes:")
             ballot = str(input()).lower()
             Ballot(ballot.split(', '))
+        log.write("{:n}.\t{:s}\n".format(Ballot.totalBallots, ballot))
 
     #Collects votes until told to stop
     def getVotes():
+        log.write("\n\n~~~~~BALLOTS~~~~~\n")
         print("\n\n~~~~~ENTER VOTES~~~~~")
         print("Each candidate is listed here by name. Please list as many candidates as you wish separated by commas, in order of most desired to least. For example, a ballot might look like this for an election with five candidates:\nJohn Doe, James Roe, Theodore Roosevelt, Steve Jobs, Albert Einstein")
         print("To stop entering ballots, enter 'QUIT'. To enter multiple ballot mode, enter 'BLOCK'.")
         while True:
-            Candidate.printAllCandidates()
+            print(Candidate.getAllCandidates())
             ballot = str(input()).lower()
             if ballot == "'block'":
                 print("You have entered multiple ballot mode. The next input window will allow you to enter as many ballots as you like. Separate ballots using the TAB key.")
@@ -215,10 +217,12 @@ class Ballot:
 
 #Tallies all votes and runs the single transferable vote process
 def tallyVotes():
-    print("\n\n~~~~~VOTE TALLIES~~~~~")
+    print("\n\n~~~~~VOTE TABULATION~~~~~")
+    log.write("\n\n~~~~~VOTE TABULATION~~~~~")
     electThreshold = float(Ballot.totalBallots * electPercent)
     print("Ballots will now be tabulated. In order to be elected, a candidate must recieve at least {:2f} votes. {:n} ballots have been cast.".format(electThreshold, Ballot.totalBallots))
-    
+    log.write("\nBallots will now be tabulated. In order to be elected, a candidate must recieve at least {:2f} votes. {:n} ballots have been cast.".format(electThreshold, Ballot.totalBallots))
+
     candidatesElected = 0
     candidatesRemaining = Candidate.numCands
     round = 1
@@ -240,39 +244,49 @@ def tallyVotes():
                
         Candidate.sort()
         print("\n~~~ROUND {:n} VOTES~~~".format(round))
+        log.write("\n~~~ROUND {:n} VOTES~~~".format(round))
         print("{:n} candidates have been elected. There are {:n} candidates remaining.".format(candidatesElected, candidatesRemaining))
-        Candidate.printVotes()
+        log.write("\n{:n} candidates have been elected. There are {:n} candidates remaining.\n".format(candidatesElected, candidatesRemaining))
+        log.write(Candidate.getCandVotes())
+        print(Candidate.getCandVotes())
         round += 1
         for candidate in Candidate.allCandidates:
             if candidatesElected < seatNum and not candidate.isElected() and candidate.checkElected(electThreshold):
                 print("{:s} has been elected with {:2f} votes. Their {:2f} surplus votes will be redistributed to other candidates in later rounds.".format(candidate.getName(), candidate.getVotes(), candidate.getVoteSurplus(electThreshold)))
+                log.write("\n{:s} has been elected with {:2f} votes. Their {:2f} surplus votes will be redistributed to other candidates in later rounds.".format(candidate.getName(), candidate.getVotes(), candidate.getVoteSurplus(electThreshold)))
                 candidate.setDisplayVotes(electThreshold)
                 candidatesElected += 1
                 candidatesRemaining -= 1
                 break
-            if not candidate.isElected() and not candidate.isEliminated() and candidate == Candidate.candidates[Candidate.numCands - 1]:
+            if not candidate.isElected() and not candidate.isEliminated() and (candidate == Candidate.candidates[Candidate.numCands - 1] or candidatesElected == seatNum):
                 candidate.eliminate()
                 candidatesRemaining -=1
                 print("{:s} has been eliminated. Their {:2f} votes will be redistributed to other candidates in later rounds.".format(candidate.getName(), candidate.getVotes()))
-        input("Press any key to advance to the next round of vote tabulation.\n") 
+                log.write("\n{:s} has been eliminated. Their {:2f} votes will be redistributed to other candidates in later rounds.".format(candidate.getName(), candidate.getVotes()))
+        input("Press any key to advance to the next round of vote tabulation.") 
     return 0
 
 if __name__ == "__main__":
     print("Welcome to @Benjome's Single Transferable Vote calculator!")
     print("~~~~~ELECTION SETUP~~~~~")
     name = str(input("Give a Name for this Election: \n"))
-    filename = "elections/" +  name.lower() + ".csv"
-    numCands = int(input("Enter Number of Candidates: \n"))
-    seatNum = int(input("Enter Number of Seats: \n"))
+    filename = "elections/" +  name.lower() + ".txt"
+    with open(filename, 'w') as log:
+        numCands = int(input("Enter Number of Candidates: \n"))
+        seatNum = int(input("Enter Number of Seats: \n"))
+        log.write("ELECTION " + name.upper() + "\n")
+        log.write("{:n} candidates      {:n} seats\n".format(numCands, seatNum))
+        electPercent = 1 / (float)(seatNum + 1)
     
-    electPercent = 1 / (float)(seatNum + 1)
-    
-    for i in range(numCands):
-        Candidate(input("Enter name of candidate " + str(i + 1) + "\n"))
-
-    Ballot.getVotes()
-    tallyVotes()
-    Candidate.sort()
-    print("The final tally of the election is:")
-    Candidate.printAllVotes()
-    Candidate.finalPrint()
+        for i in range(numCands):
+            Candidate(input("Enter name of candidate " + str(i + 1) + "\n"))
+        log.write("Candidates:\t\t{:s}".format(Candidate.getAllCandidates()))
+        Ballot.getVotes()
+        tallyVotes()
+        Candidate.sort()
+        print("The final tally of the election is:")
+        log.write("\n\nThe final tally of the election is:")
+        log.write("\n" + Candidate.getAllVotes())
+        print(Candidate.getAllVotes())
+        log.write("\n" + Candidate.finalPrint())
+        print(Candidate.finalPrint())
