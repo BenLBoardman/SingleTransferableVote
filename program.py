@@ -1,6 +1,6 @@
 #-------------------------------------
 # Single Transferable Vote Calculator
-#             Version 1.2.1
+#             Version 1.2.2
 #         Ben Boardman (@Benjome)
 #            13 April 2022
 #-------------------------------------
@@ -127,7 +127,15 @@ class Candidate:
     
     #Gets the final printout of votes
     def finalPrint():
-        printout = "Candidates "
+        printout = "The final tally of the election is:\n"
+        Candidate.allCandidates.sort(key=lambda x: x.isElected(), reverse=True)
+        for candidate in Candidate.allCandidates:
+            printout += candidate.getName()
+            if candidate.isElected():
+                printout += ":\t ELECTED\n"
+            if candidate.isEliminated():
+                printout += ":\t ELIMINATED\n"
+        printout += "\nCandidates "
         for candidate in Candidate.candidates:
             if candidate == Candidate.candidates[Candidate.numCands - 1]:
                 printout += "and " + candidate.getName()
@@ -270,7 +278,7 @@ if __name__ == "__main__":
     print("Welcome to @Benjome's Single Transferable Vote calculator!")
     print("~~~~~ELECTION SETUP~~~~~")
     name = str(input("Give a Name for this Election: \n"))
-    filename = "elections/" +  name.lower() + ".txt"
+    filename = 'SingleTransferableVote\elections\{:s}.txt'.format(name.lower())
     with open(filename, 'w') as log:
         numCands = int(input("Enter Number of Candidates: \n"))
         seatNum = int(input("Enter Number of Seats: \n"))
@@ -283,10 +291,6 @@ if __name__ == "__main__":
         log.write("Candidates:\t\t{:s}".format(Candidate.getAllCandidates()))
         Ballot.getVotes()
         tallyVotes()
-        Candidate.sort()
-        print("The final tally of the election is:")
-        log.write("\n\nThe final tally of the election is:")
-        log.write("\n" + Candidate.getAllVotes())
-        print(Candidate.getAllVotes())
+
         log.write("\n" + Candidate.finalPrint())
         print(Candidate.finalPrint())

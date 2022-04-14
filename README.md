@@ -1,6 +1,10 @@
 # SingleTransferableVote
  A simple program to enter and calculate single transferable vote tallies
 
+# NEW VERSION 1.2.2
+ - Fixed a bug where file setup would not work
+ - Improved final tally reporting visual appearance
+
 # NEW VERSION 1.2
  - Fixed a bug where candidates may not be eliminated if there are 0 seats remaining.
  - All election data and results are outputted to a .txt file.
