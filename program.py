@@ -75,7 +75,6 @@ class Candidate:
     #Eliminates the candidate
     def eliminate(self):
         self.__isEliminated = True
-        Candidate.candidates.remove(self)
         Candidate.numCands -= 1
     
     #Reflect whether the candidate is eliminated
@@ -193,6 +192,13 @@ class Ballot:
                 return False
             return True
     
+    #Simulates ballot exhaustion - If a ballot ends before all candidates are ranked, the ballot is removed
+    def exhaust(self):
+        if self.__rank == len(self.__votes):
+            Ballot.ballots.remove(self)
+            return True
+        return False
+    
     #Add a ballot, given a string representation of the ballot's votes
     def addBallot(ballot):
         Ballot(ballot.split(', '))
@@ -237,14 +243,17 @@ def tallyVotes():
     while candidatesRemaining > 0:
         for ballot in Ballot.ballots:
             while True:
-                candidate = Candidate.searchCandidates(ballot.get())
-                if candidate.isEliminated():
-                    ballot.increment()
-                elif candidate.isElected():
-                    ballot.setRemaining(candidate.getExtraVotePercent(electThreshold))
-                    ballot.increment()
-                else:
+                if ballot.exhaust():
                     break
+                else:
+                    candidate = Candidate.searchCandidates(ballot.get())
+                    if candidate.isEliminated():
+                        ballot.increment()
+                    elif candidate.isElected():
+                       ballot.setRemaining(candidate.getExtraVotePercent(electThreshold))
+                       ballot.increment()
+                    else:
+                        break
             if not ballot.getCandidate() == candidate:
                 ballot.setCandidate(candidate)
                 candidate.addVotes(ballot.getRemaining())  
@@ -278,7 +287,7 @@ if __name__ == "__main__":
     print("Welcome to @Benjome's Single Transferable Vote calculator!")
     print("~~~~~ELECTION SETUP~~~~~")
     name = str(input("Give a Name for this Election: \n"))
-    filename = 'SingleTransferableVote\elections\{:s}.txt'.format(name.lower())
+    filename = "elections/{:s}.txt".format(name.lower())
     with open(filename, 'w') as log:
         numCands = int(input("Enter Number of Candidates: \n"))
         seatNum = int(input("Enter Number of Seats: \n"))
